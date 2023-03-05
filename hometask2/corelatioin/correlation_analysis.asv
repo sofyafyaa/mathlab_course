@@ -1,0 +1,99 @@
+%% Task 1
+clear; clc; close all;
+
+Bit_Stream = importdata('Matlab_L3_8.mat');
+Header = [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1];
+
+Res_correlation_sz = length(Bit_Stream)-length(Header);
+
+Res_correlation(1:Res_correlation_sz) = 0;
+
+is_first = false;
+Start_Of_Frame_Positions(1:18) = 0;
+Start_Of_Frame_Position = 0;
+Number_Of_Frame = 0;
+
+for itter = 1 : Res_correlation_sz
+    Res_correlation(itter) = sum(Header.* Bit_Stream(itter + 1:itter+length(Header)))/length(Header);
+
+    if (~is_first) && (Res_correlation(itter) == 1)
+        Start_Of_Frame_Position = itter + 1;
+        is_first = true;
+        Number_Of_Frame = Number_Of_Frame + 1;
+    elseif (Res_correlation(itter) == 1) && (Res_correlation(itter - 1) ~= 1)
+        Start_Of_Frame_Positions
+        Number_Of_Frame = Number_Of_Frame + 1;
+    end
+end
+
+Size_Of_Data = 
+
+figure;
+title("Correlation analysis");
+plot(Res_correlation);
+
+savefig('Frame_Corr.fig');
+save('Frame_search.mat', "Start_Of_Frame_Position", "Number_Of_Frame");
+
+%% Task 2
+
+Register = [1 0 0 1 0 1 0];
+
+PN_seq = Scrambler(Register, 127*10);
+
+Rand_bit_seq = randi([0, 1], 1, 127*10);
+
+Autocor_PN = Autocor(PN_seq);
+Autocor_rand = Autocor(Rand_bit_seq);
+
+Time_Scale_ACF = linspace(-round(length(Autocor_PN)/2),round(length(Autocor_PN)/2), length(Autocor_PN));
+
+figure;
+plot(Time_Scale_ACF, Autocor_PN);
+title("AutoCorrelation function of PN-seq");
+savefig('ACF_Srambler.fig');
+
+figure;
+plot(Time_Scale_ACF, Autocor_rand);
+title("AutoCorrelation random seq");
+
+
+itter_splash = 1;
+splash_indx(1 : length(Autocor_PN)) = 0;
+average_seq = sum(Autocor_PN, 2)/length(Autocor_PN);
+for itter_seq = 1 : length(Autocor_PN)
+    if (Autocor_PN(itter_seq) > 1.5*average_seq)
+        splash_indx(itter_splash) = itter_seq;
+        itter_splash = itter_splash + 1;
+    end
+end
+
+% Finding the PN-sequence period based on the results 
+% of autocorrelation function. 
+
+itter_splash = itter_splash + 1;
+splash_indx(itter_splash:end) = [];
+
+period_splash(1 : (length(splash_indx) - 1)) = 0;
+
+for itter = 2 : length(period_splash)
+    period_splash(itter - 1) = splash_indx(itter) - splash_indx(itter - 1);
+end
+period_splash(itter) = splash_indx(itter) - splash_indx(itter - 1);
+
+PN_Period = sum(period_splash, 2)/length(period_splash);
+
+%% Task 2.1
+
+for itter = 0 : length(Register) - 4
+
+    Register(itter + 1) = [];
+
+    PN_seq_itter = Scrambler(Register, 1e3);
+    Autocor_itter = Autocor(PN_seq_itter);
+
+    Time_Scale_ACF = linspace(-round(length(Autocor_itter)/2),round(length(Autocor_itter)/2), length(Autocor_itter));
+    
+    subplot(4,1, itter + 1);
+    plot(Time_Scale_ACF, Autocor_itter);
+end

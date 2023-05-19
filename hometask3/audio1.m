@@ -25,7 +25,7 @@ signal_spec_renew(F_d - max_idx(3)) = signal_spec(max_idx(3));
 signal_renew = ifft(signal_spec_renew);
 
 figure;
-plot(k, abs(signal))
+plot(k, signal)
 xlabel('n'); ylabel('X(n)'); title('Signal');
 
 figure;
@@ -57,7 +57,11 @@ signal = Amp * sin(2*pi*freqHz*t);
 N = fsHz*3;
 signal_spec = fft(signal,N);
 
-audiowrite('sinusoida1.wav', signal, fsHz);
+%audiowrite('sinusoida1.wav', signal, fsHz);
+%audiowrite('sinusoida2.wav', signal, fsHz, 'BitsPerSample', 64);
+
+signal_norm = signal / (max(abs(signal)));
+audiowrite('sinusoida.wav', signal_norm, fsHz);
 
 clipping_ampl = 2;
 singal_clipped = signal .* (signal <=clipping_ampl & signal >= -clipping_ampl) + clipping_ampl .* (signal >clipping_ampl) + (-clipping_ampl) * (signal < -clipping_ampl);
